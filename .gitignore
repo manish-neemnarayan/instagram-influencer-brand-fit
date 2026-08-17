@@ -1,0 +1,35 @@
+# personal study notes, not part of the deliverable
+revision-notes.md
+
+# course material supplied by the instructor, not mine to redistribute
+antern/
+**/dryrun-*.html
+**/*.tldraw
+week1-belief-engine-*.html
+week1-ai-native-shipping-sprint.md
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.python-version
+
+# editors / os
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# scratch
+*.log
+.ipynb_checkpoints/
+tmp/
+scratch/
+
+# NOTE: data/ and results/ are deliberately NOT ignored.
+# The brief requires saved predictions and actions, and every number in the
+# paper must have a file behind it.

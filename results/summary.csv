@@ -1,0 +1,9 @@
+arm,policy,total_cost,mean_cost,signed,signed_unsafe,signed_inauthentic,signed_sophisticated,declined_clean,human_review_rate,probe_rate
+misspecified,v0_threshold,-119.0,-2.975,17,0,1,1,0,0.075,0.15
+misspecified,v0_expected_cost,-137.0,-3.425,17,0,1,1,0,0.0,0.075
+misspecified,v1_voi,-115.0,-2.875,16,0,1,1,0,0.075,0.0
+misspecified,engagement_baseline,375.0,9.375,28,1,7,4,4,0.0,0.0
+oracle,v0_threshold,-119.0,-2.975,17,0,1,1,0,0.075,0.15
+oracle,v0_expected_cost,-140.0,-3.5,17,0,1,1,0,0.0,0.0
+oracle,v1_voi,-140.0,-3.5,17,0,1,1,0,0.0,0.0
+oracle,engagement_baseline,375.0,9.375,28,1,7,4,4,0.0,0.0

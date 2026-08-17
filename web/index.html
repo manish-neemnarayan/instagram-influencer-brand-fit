@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Influencer–Brand Fit Agent · v0</title>
+<style>
+:root{
+  --bg:#0b0d12; --panel:#12151c; --panel2:#171b24; --line:#232936; --line2:#2e3644;
+  --ink:#e8ebf2; --ink2:#aab3c5; --dim:#6f7889;
+  --acc:#6ea8fe; --good:#43d19e; --bad:#f2777a; --warn:#e8b64c;
+  --w1:#43d19e; --rd:#ff8a5b; --ai:#a78bfa;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font:14.5px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:#1b2030;
+  padding:1px 5px;border-radius:4px;color:var(--ink2)}
+
+/* ---------- shell ---------- */
+header{border-bottom:1px solid var(--line);background:rgba(11,13,18,.92);
+  backdrop-filter:blur(12px);position:sticky;top:0;z-index:50}
+.hwrap{max-width:1240px;margin:0 auto;padding:16px 24px 0}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:3px}
+.brand h1{font-size:17px;font-weight:650;letter-spacing:-.01em}
+.brand .tag{font-size:11px;color:var(--dim);border:1px solid var(--line2);
+  padding:2px 8px;border-radius:20px}
+.brand .live{color:var(--good)}
+.brand .live::before{content:"";display:inline-block;width:6px;height:6px;
+  border-radius:50%;background:var(--good);margin-right:6px;vertical-align:middle}
+.sub1{font-size:13px;color:var(--dim);margin-bottom:14px}
+nav{display:flex;gap:2px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);
+  padding:10px 15px;font-size:13.5px;cursor:pointer;white-space:nowrap;font-family:inherit}
+nav button:hover{color:var(--ink2)}
+nav button.on{color:var(--ink);border-bottom-color:var(--acc);font-weight:600}
+
+main{max-width:1240px;margin:0 auto;padding:30px 24px 90px}
+.tab{display:none} .tab.on{display:block}
+
+/* ---------- pieces ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.card.tight{padding:15px}
+h2{font-size:15px;font-weight:650;margin-bottom:4px;letter-spacing:-.005em}
+h3{font-size:12px;font-weight:600;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.07em;margin-bottom:12px}
+.lede{color:var(--ink2);max-width:74ch;margin-bottom:22px;font-size:14.5px}
+.muted{color:var(--dim);font-size:12.5px}
+.row{display:grid;gap:18px}
+@media(min-width:960px){
+  .r-side{grid-template-columns:300px 1fr}
+  .r-2{grid-template-columns:1fr 1fr}
+  .r-3{grid-template-columns:repeat(3,1fr)}
+}
+
+/* stat strip */
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.stat .n{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .l{font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.35}
+
+/* controls */
+.grp{border-top:1px solid var(--line);padding-top:14px;margin-top:16px}
+.grp:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.grp>.gh{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  margin-bottom:2px}
+.gh.world{color:var(--w1)} .gh.adv{color:var(--rd)} .gh.cost{color:var(--ai)} .gh.pol{color:var(--acc)}
+label{display:block;font-size:12.5px;color:var(--ink2);margin:12px 0 3px}
+label b{float:right;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--acc);height:18px}
+.hint{font-size:11.5px;color:var(--dim);margin-top:2px}
+.seg{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:96px;background:var(--panel2);color:var(--ink2);
+  border:1px solid var(--line2);border-radius:7px;padding:7px 8px;cursor:pointer;
+  font-size:12px;font-family:inherit}
+.seg button:hover{border-color:var(--acc);color:var(--ink)}
+.seg button.on{background:var(--acc);color:#0b0d12;border-color:var(--acc);font-weight:600}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:0}
+th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--panel2)}
+.scroll{max-height:430px;overflow:auto;border-radius:8px}
+
+.good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)} .dim{color:var(--dim)}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;
+  letter-spacing:.03em}
+.SIGN{background:rgba(67,209,158,.14);color:var(--good)}
+.DECLINE{background:rgba(111,120,137,.16);color:var(--ink2)}
+.ESCALATE{background:rgba(232,182,76,.14);color:var(--warn)}
+.ANALYTICS,.GIFT{background:rgba(110,168,254,.14);color:var(--acc)}
+
+.bar{height:7px;background:#1c2130;border-radius:4px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;border-radius:4px;transition:width .25s}
+
+/* trace */
+.trace{font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}
+.trace .t{border-left:2px solid var(--line2);padding:9px 0 9px 13px;margin-bottom:3px}
+.trace .t:hover{border-left-color:var(--acc);background:rgba(110,168,254,.03)}
+.trace .f{color:var(--acc)} .trace .fn{color:var(--good)}
+.trace .ms{float:right;color:var(--dim)}
+.trace .d{color:var(--dim);margin-top:4px;font-family:inherit;font-size:12.5px}
+.trace .res{color:var(--ink2);margin-top:4px;font-size:11.5px}
+
+.note{background:var(--panel2);border-left:3px solid var(--warn);padding:13px 15px;
+  border-radius:0 8px 8px 0;color:var(--ink2);font-size:13.5px}
+.note.acc{border-left-color:var(--acc)}
+.note b{color:var(--ink)}
+
+.kv{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin-top:10px}
+.kv b{color:var(--ink)}
+
+/* provenance */
+.prov section{border:1px solid var(--line);border-radius:var(--r);padding:18px;
+  background:var(--panel);height:100%}
+.prov h3{font-size:13px;text-transform:none;letter-spacing:0;margin-bottom:14px;
+  padding-bottom:10px;border-bottom:1px solid var(--line)}
+.prov ul{list-style:none} .prov li{color:var(--ink2);font-size:13px;margin-bottom:11px;
+  padding-left:13px;position:relative}
+.prov li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;
+  border-radius:50%;background:currentColor;opacity:.45}
+.prov li b{color:var(--ink)}
+.w1c h3{color:var(--w1)} .rdc h3{color:var(--rd)} .aic h3{color:var(--ai)}
+
+/* pipeline */
+.pipe{display:grid;gap:10px}
+@media(min-width:820px){.pipe{grid-template-columns:repeat(5,1fr)}}
+.step{background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:14px}
+.step .k{font-size:10.5px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+.step .v{font-weight:650;margin:5px 0 6px;font-size:14px}
+.step .x{font-size:12.5px;color:var(--ink2)}
+
+.big{font-size:22px;font-weight:700}
+footer{border-top:1px solid var(--line);margin-top:44px;padding-top:18px;
+  color:var(--dim);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <h1>Influencer–Brand Fit Agent</h1>
+      <span class="tag">v0 · frozen</span>
+      <span class="tag live">running the paper's own Python</span>
+    </div>
+    <div class="sub1">
+      Cohort 3 · Week 1 student project · premium / mid-luxury fashion · simulated data only
+    </div>
+    <nav>
+      <button data-t="try" class="on">Try it</button>
+      <button data-t="exp">Run the experiment</button>
+      <button data-t="how">How it works</button>
+      <button data-t="prov">Where the ideas came from</button>
+      <button data-t="lim">Limitations</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================ TRY IT ============================ -->
+<section class="tab on" id="t-try">
+  <h2>Score one influencer</h2>
+  <p class="lede">
+    The agent sees six public numbers and must choose: sign, gift first, request
+    analytics, escalate to a human, or decline. It cannot see whether the audience is
+    real, whether it fits the brand, or whether anything damaging sits in her history.
+    <br><br>
+    Start with <b>Sophisticated fake</b>. The agent signs it, at about 99% confidence
+    that the audience is real. That is the finding this whole project is about.
+  </p>
+
+  <div class="row r-side">
+    <div class="card">
+      <h3>Presets</h3>
+      <div class="seg" style="margin-bottom:4px">
+        <button class="preset" data-p="clean">Textbook good</button>
+        <button class="preset" data-p="crude">Crude fake</button>
+      </div>
+      <div class="seg">
+        <button class="preset" data-p="soph">Sophisticated fake</button>
+        <button class="preset" data-p="pods">Buying engagement</button>
+      </div>
+      <div class="seg">
+        <button class="preset" data-p="mismatch">Real, wrong fit</button>
+        <button class="preset" data-p="risk">Disclosure problem</button>
+      </div>
+
+      <div class="grp" style="margin-top:20px">
+        <div class="gh world">Signals about the audience</div>
+        <label>Engagement rate <b id="v_e1">2.80%</b></label>
+        <input type="range" id="e1" min="1" max="120" step="1" value="28">
+        <div class="hint">Fashion sits at 2.2–3.8%. Under 1% and over 6% are both suspicious.</div>
+
+        <label>Generic / emoji-only comments <b id="v_e2">30%</b></label>
+        <input type="range" id="e2" min="0" max="100" step="1" value="30">
+        <div class="hint">Real audiences post emojis too. Near zero would be unusual.</div>
+
+        <label>Follower spikes in 24 months <b id="v_e3">0</b></label>
+        <input type="range" id="e3" min="0" max="8" step="1" value="0">
+        <div class="hint">Going viral looks the same as buying followers.</div>
+      </div>
+
+      <div class="grp">
+        <div class="gh pol">Signals about brand fit</div>
+        <label>Audience in target market <b id="v_e4">70%</b></label>
+        <input type="range" id="e4" min="0" max="100" step="1" value="70">
+        <label>Past collabs at premium tier <b id="v_e5">60%</b></label>
+        <input type="range" id="e5" min="0" max="100" step="1" value="60">
+      </div>
+
+      <div class="grp">
+        <div class="gh cost">Signal about safety</div>
+        <label>Paid posts properly disclosed <b id="v_e6">85%</b></label>
+        <input type="range" id="e6" min="0" max="100" step="1" value="85">
+      </div>
+    </div>
+
+    <div>
+      <div class="card" id="scoreout"></div>
+      <div class="card tight trace" id="scoretrace" style="margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ EXPERIMENT ============================ -->
+<section class="tab" id="t-exp">
+  <h2>Forty influencers, three policies</h2>
+  <p class="lede">
+    Two versions of the agent against a baseline that only looks at engagement rate.
+    Drag <b>how well they hide</b> from 0 to 100 and watch the agent fall apart.
+  </p>
+
+  <div class="stats" id="hero"></div>
+
+  <div class="row r-side">
+    <div class="card">
+      <h3>Controls</h3>
+
+      <div class="grp">
+        <div class="gh world">The world</div>
+        <label>Influencers <b id="v_n">40</b></label>
+        <input type="range" id="n_cases" min="10" max="200" step="10" value="40">
+        <label>Seed <b id="v_seed">42</b></label>
+        <input type="range" id="seed" min="1" max="100" step="1" value="42">
+        <label>Inauthentic in the shortlist <b id="v_pa">25%</b></label>
+        <input type="range" id="p_A_false" min="0" max="60" step="1" value="25">
+        <label>Mismatched to the brand <b id="v_pm">40%</b></label>
+        <input type="range" id="p_M_false" min="0" max="80" step="1" value="40">
+        <label>Carrying a safety risk <b id="v_ps">5%</b></label>
+        <input type="range" id="p_S_false" min="0" max="30" step="1" value="5">
+      </div>
+
+      <div class="grp">
+        <div class="gh adv">The adversary</div>
+        <label>Of the fakes, share that evade <b id="v_soph">40%</b></label>
+        <input type="range" id="p_sophisticated" min="0" max="100" step="5" value="40">
+        <label>How well they hide <b id="v_pull">80%</b></label>
+        <input type="range" id="soph_pull" min="0" max="100" step="5" value="80">
+        <div class="hint">At 0 they are crude and always caught. At 100 they are invisible.</div>
+      </div>
+
+      <div class="grp">
+        <div class="gh cost">Costs, relative units</div>
+        <label>Sign a safety risk <b id="v_cu">200</b></label>
+        <input type="range" id="sign_unsafe" min="20" max="600" step="10" value="200">
+        <label>Decline someone good <b id="v_cd">10</b></label>
+        <input type="range" id="decline_good" min="0" max="60" step="1" value="10">
+        <label>Sign a padded audience <b id="v_cf">20</b></label>
+        <input type="range" id="sign_fake" min="0" max="80" step="1" value="20">
+        <div class="hint">Only the ratios matter. Both the first two are guesses.</div>
+      </div>
+
+      <div class="grp">
+        <div class="gh pol">Policy</div>
+        <label>Uncertainty gate τ <b id="v_tau">0.50</b></label>
+        <input type="range" id="tau" min="0" max="99" step="1" value="50">
+        <label>Baseline engagement cut-off <b id="v_co">2.0%</b></label>
+        <input type="range" id="baseline_cutoff" min="5" max="60" step="1" value="20">
+        <label style="margin-top:16px">Agent's knowledge of the world</label>
+        <div class="seg" id="arm">
+          <button data-v="misspecified" class="on">Guessing</button>
+          <button data-v="oracle">Told the truth</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>Results</h3>
+        <table id="summary"></table>
+        <div class="kv">
+          <span>Negative cost is a net gain.</span>
+          <span>FP = signed someone not worth signing.</span>
+          <span>FN = passed on someone good.</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Every decision · click a row</h3>
+        <div class="scroll"><table id="cases"></table></div>
+      </div>
+
+      <div class="card" id="detailwrap" style="margin-top:16px;display:none">
+        <h3>Case detail</h3>
+        <div id="detail"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Calibration · when it says 90%, is it right 90% of the time?</h3>
+        <table id="calib"></table>
+        <div class="kv" id="ece"></div>
+      </div>
+
+      <div class="card tight trace" style="margin-top:16px" id="trace"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ HOW ============================ -->
+<section class="tab" id="t-how">
+  <h2>How it works</h2>
+  <p class="lede">
+    An agent is not a classifier. A classifier outputs a label and is scored on how
+    often it is right. This outputs an <b>action</b>, can choose not to decide yet, and
+    is scored on what its mistakes cost.
+  </p>
+
+  <div class="pipe" style="margin-bottom:26px">
+    <div class="step"><div class="k">1 · evidence</div><div class="v">Six signals</div>
+      <div class="x">Public profile numbers. All the agent can see.</div></div>
+    <div class="step"><div class="k">2 · hidden state</div><div class="v">Three questions</div>
+      <div class="x">Real audience? Right fit? Anything buried?</div></div>
+    <div class="step"><div class="k">3 · belief</div><div class="v">Eight atoms</div>
+      <div class="x">Bayes on each question, multiplied together.</div></div>
+    <div class="step"><div class="k">4 · cost</div><div class="v">Seven weights</div>
+      <div class="x">What each mistake is worth. Ratios only.</div></div>
+    <div class="step"><div class="k">5 · action</div><div class="v">Cheapest option</div>
+      <div class="x">Sign, gift, ask, escalate, or decline.</div></div>
+  </div>
+
+  <div class="row r-2">
+    <div class="card">
+      <h3>The three hidden questions</h3>
+      <table>
+        <tr><td><b>A</b> Is the audience authentic?</td><td class="dim">yes / no</td></tr>
+        <tr><td><b>M</b> Does it match a premium house?</td><td class="dim">yes / no</td></tr>
+        <tr><td><b>S</b> Free of buried brand-safety risk?</td><td class="dim">yes / no</td></tr>
+      </table>
+      <p class="muted" style="margin-top:14px">
+        Their 2×2×2 = 8 combinations are mutually exclusive and collectively exhaustive
+        <i>by construction</i>. An earlier version used four named states and broke the
+        rule, because "inauthentic" and "mismatched" can both be true of one person.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Each signal answers exactly one question</h3>
+      <table>
+        <tr><td>Engagement rate</td><td class="good">A</td></tr>
+        <tr><td>Generic comment share</td><td class="good">A</td></tr>
+        <tr><td>Follower growth spikes</td><td class="good">A</td></tr>
+        <tr><td>Audience in target market</td><td class="acc" style="color:var(--acc)">M</td></tr>
+        <tr><td>Past premium collabs</td><td style="color:var(--acc)">M</td></tr>
+        <tr><td>Disclosure history</td><td class="warn">S</td></tr>
+      </table>
+      <p class="muted" style="margin-top:14px">
+        Which is why eight states need <b>12</b> likelihoods, not 48. Engagement rate
+        does not care whether she matches the brand, so all eight atoms collapse to two
+        cases for it. Fewer numbers to defend than the four-state version's 24.
+      </p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>The eight atoms</h3>
+    <p style="color:var(--ink2);margin-bottom:14px">
+      Every influencer sits in exactly one of these. The belief is eight numbers, one per
+      row, and they sum to 1. τ is compared against the largest of them.
+    </p>
+    <table>
+      <thead><tr><th>#</th><th>Audience real</th><th>Matches brand</th><th>No buried risk</th>
+        <th>Plain reading</th><th>Cost if signed</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="good">yes</td><td class="good">yes</td><td class="good">yes</td>
+          <td>Clean fit</td><td class="good">−10</td></tr>
+        <tr><td>2</td><td class="good">yes</td><td class="good">yes</td><td class="bad">no</td>
+          <td>Good audience, buried risk</td><td class="bad">+200</td></tr>
+        <tr><td>3</td><td class="good">yes</td><td class="bad">no</td><td class="good">yes</td>
+          <td>Real audience, wrong for us</td><td>+15</td></tr>
+        <tr><td>4</td><td class="good">yes</td><td class="bad">no</td><td class="bad">no</td>
+          <td>Wrong for us and risky</td><td class="bad">+200</td></tr>
+        <tr><td>5</td><td class="bad">no</td><td class="good">yes</td><td class="good">yes</td>
+          <td>Padded, otherwise aligned</td><td>+20</td></tr>
+        <tr><td>6</td><td class="bad">no</td><td class="good">yes</td><td class="bad">no</td>
+          <td>Padded and risky</td><td class="bad">+200</td></tr>
+        <tr><td>7</td><td class="bad">no</td><td class="bad">no</td><td class="good">yes</td>
+          <td>Padded and wrong for us</td><td>+20</td></tr>
+        <tr><td>8</td><td class="bad">no</td><td class="bad">no</td><td class="bad">no</td>
+          <td>Everything wrong</td><td class="bad">+200</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:14px">
+      Notice the cost column: <b>four of the eight atoms cost 200 if signed</b>, and they
+      are the four where the safety question is answered "no". A buried risk swamps
+      everything else, which is why a single 5% prior on that one question drives so much
+      of the agent's caution.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>The twelve likelihoods</h3>
+    <p style="color:var(--ink2);margin-bottom:14px">
+      Every number the agent needs in order to read evidence. Six signals, two
+      possibilities each. The <b>truth</b> column generated the data; the <b>agent's guess</b>
+      column is what it actually uses when the toggle says "Guessing". Every one of these
+      is an assumption except E1, which is anchored on published fashion benchmarks.
+    </p>
+    <table>
+      <thead><tr><th>Signal</th><th>Question</th><th>Answer</th>
+        <th>Truth used to generate</th><th>Agent's guess</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="2">E1 engagement rate</td><td rowspan="2">A</td>
+          <td class="good">yes</td><td>Beta, mean 2.8%</td><td>Beta, mean 2.6%</td></tr>
+        <tr><td class="bad">no</td>
+          <td>70% Beta(1.0%) + 30% Beta(7.0%)</td><td>60% Beta(1.5%) + 40% Beta(6.2%)</td></tr>
+
+        <tr><td rowspan="2">E2 generic comments</td><td rowspan="2">A</td>
+          <td class="good">yes</td><td>Beta, mean 30%</td><td>Beta, mean 35%</td></tr>
+        <tr><td class="bad">no</td><td>Beta, mean 75%</td><td>Beta, mean 68%</td></tr>
+
+        <tr><td rowspan="2">E3 growth spikes</td><td rowspan="2">A</td>
+          <td class="good">yes</td><td>Poisson λ = 0.3</td><td>Poisson λ = 0.5</td></tr>
+        <tr><td class="bad">no</td><td>Poisson λ = 2.5</td><td>Poisson λ = 2.0</td></tr>
+
+        <tr><td rowspan="2">E4 in target market</td><td rowspan="2">M</td>
+          <td class="good">yes</td><td>Beta, mean 70%</td><td>Beta, mean 65%</td></tr>
+        <tr><td class="bad">no</td><td>Beta, mean 35%</td><td>Beta, mean 40%</td></tr>
+
+        <tr><td rowspan="2">E5 premium collabs</td><td rowspan="2">M</td>
+          <td class="good">yes</td><td>Beta, mean 60%</td><td>Beta, mean 55%</td></tr>
+        <tr><td class="bad">no</td><td>Beta, mean 15%</td><td>Beta, mean 20%</td></tr>
+
+        <tr><td rowspan="2">E6 ads disclosed</td><td rowspan="2">S</td>
+          <td class="good">yes</td><td>Beta, mean 85%</td><td>Beta, mean 80%</td></tr>
+        <tr><td class="bad">no</td><td>Beta, mean 40%</td><td>Beta, mean 48%</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:14px">
+      Three things to notice. <b>E1 is two-humped when the audience is fake</b>, because
+      buying followers pushes engagement down while buying engagement pushes it up, with
+      honest accounts sitting in the gap. <b>E2 does not go near zero for real accounts</b>
+      — real audiences post emoji too, and setting it near zero would make the agent
+      brutally overconfident. And <b>E3 punishes going viral</b>: a legitimate viral month
+      produces the same spike as bought followers, which is a source of false positives by
+      construction.
+    </p>
+    <p class="muted" style="margin-top:10px">
+      Every agent guess is <i>closer to the middle</i> than the truth, and every spread is
+      looser. That is the realistic direction of error for a human estimating these, and it
+      is what the "Guessing" arm tests. The gap between the two arms turns out to be small,
+      which is the empirical answer to "where did these numbers come from?"
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>The cost matrix · live, follows your sliders</h3>
+    <p style="color:var(--ink2);margin-bottom:14px">
+      What every combination of action and truth is worth. Negative is a gain. Only the
+      ratios matter, so multiplying everything by five would change nothing.
+    </p>
+    <div id="costmatrix"></div>
+    <p class="muted" style="margin-top:14px">
+      Read down the <b>Sign</b> column. Signing the right person earns you something.
+      Signing someone with a buried safety risk costs twenty times what signing a padded
+      audience costs. That single ratio is what makes the cost-aware policy conservative,
+      and it is the number nobody can measure.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>What each policy is allowed to see</h3>
+    <table>
+      <thead><tr><th>Policy</th><th>Beliefs</th><th>Cost table</th><th>Raw signals</th></tr></thead>
+      <tbody>
+        <tr><td>Threshold · cost-blind</td><td class="good">yes</td><td class="bad">no</td><td class="bad">no</td></tr>
+        <tr><td>Expected cost · cost-aware</td><td class="good">yes</td><td class="good">yes</td><td class="bad">no</td></tr>
+        <tr><td>Engagement baseline</td><td class="bad">no</td><td class="bad">no</td><td class="warn">engagement rate only</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:14px">
+      All three are <b>scored</b> with the cost matrix afterwards, which is the only way to
+      compare them. So the threshold policy is cost-blind when deciding and cost-scored
+      when judged. That gap is precisely why it signs safety risks: nothing in its
+      decision rule knows they cost 200.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>The trap in grouping states</h3>
+    <p style="color:var(--ink2)">
+      "Audience not usable" is <b>not</b> <code>P(not authentic) + P(not matched)</code>.
+      If 30% are inauthentic, 40% are mismatched and 15% are both, the answer is
+      <b>55%</b>, not 70. Adding double-counts everyone in the overlap. So the model
+      computes <code>1 − P(both fine)</code> instead, which cannot double-count.
+    </p>
+    <p class="muted" style="margin-top:10px">
+      The error runs one way: it overstates the case for rejecting, and rejection is the
+      mistake nobody ever discovers.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>Why the adversary matters</h3>
+    <p style="color:var(--ink2)">
+      Inauthenticity is not modelled as a natural phenomenon. Someone padding an account
+      knows brands check engagement rate and comment quality, so they buy realistic
+      comments and drip-feed followers. One hidden cause shifts several signals together,
+      which is where the correlation in this model comes from: a mechanism, not an
+      invented covariance number.
+    </p>
+    <p class="muted" style="margin-top:10px">
+      Consequence: strong evidence can point confidently the wrong way, detection signals
+      decay as they become known, and adding a cheap-to-fake signal just buys more
+      confidence in the wrong answer. Prefer signals that are expensive to fake.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ PROVENANCE ============================ -->
+<section class="tab" id="t-prov">
+  <h2>Where each idea came from</h2>
+  <p class="lede">
+    Some of this was taught in Week 1, some came from practitioners who replied on
+    Reddit, and some came from an AI assistant. Keeping them separate seemed more honest
+    than presenting it all as one thing.
+  </p>
+
+  <div class="row r-3 prov">
+    <section class="w1c">
+      <h3>Taught in Week 1</h3>
+      <ul>
+        <li><b>Split the hundred.</b> A belief is 100 imaginary cases in boxes that must total 100.</li>
+        <li><b>Mutually exclusive and collectively exhaustive.</b> No two boxes true at once, no true story without a box. This rule is what broke the first design.</li>
+        <li><b>Base rates.</b> The Chapter 2 trap, which is exactly the "37% of followers" versus "37% of influencers" confusion.</li>
+        <li><b>Prior, likelihood, posterior.</b> The update itself.</li>
+        <li><b>The distribution zoo.</b> Matching a question type to a shape.</li>
+        <li><b>Calibration.</b> "Of all the times our agent says 35% genuine, about 35 in 100 should later turn out genuine." Plus the warning that a tenfold error near a threshold flips a decision.</li>
+        <li><b>Information is not free</b>, and the probe rule stated outright: collect more evidence "when the expected improvement in the later decision is greater than the full cost of obtaining the evidence." That is value of information, taught here first. Reddit supplied the name, not the principle.</li>
+        <li><b>The 92% lie.</b> Being right often is not being right where it matters.</li>
+        <li><b>Confusion matrix, precision, recall, entropy, escalation.</b></li>
+      </ul>
+    </section>
+
+    <section class="rdc">
+      <h3>From practitioners on Reddit</h3>
+      <ul>
+        <li><b>efrique</b> (PhD statistics, r/AskStatistics): "defensible" is a rhetorical question, not a statistical one. The statistical question is how much bias the simplification introduces, and you can explore it by simulation. <i>This became the whole sensitivity analysis.</i></li>
+        <li><b>Technical_Estate_529</b>: named the independence assumption as naive Bayes / mean field, and noted it "gets surprisingly decent results."</li>
+        <li><b>Adept_Carpet</b>: overlap only matters if it actually occurs.</li>
+        <li><b>akl773</b> (r/AI_Agents): look at what the belief is split <i>across</i>, not how much is left. If the live candidates lead to the same action, uncertainty is free. <i>This explains why the uncertainty gate here is useless.</i></li>
+        <li><b>zhonglin</b>: escalation should be an action with its own cost and error rate, not a gate outside the policy.</li>
+        <li><b>TeagueXiao</b>: named the stopping problem as SPRT, Wald, 1940s. Stop probing when the value of information goes negative, not at a fixed cap.</li>
+        <li><b>Express_Meat_3948</b>: the gate treats escalation as an emergency brake rather than another option on the menu.</li>
+        <li><b>th3_sinner</b> (r/CreatorEconomy): "A gifted post tests their operations, not their audience." A weak gifted post means low motivation, not a cold audience. Suggested median organic views and saves/shares instead of likes, because those track intent and are harder to fake.</li>
+        <li><b>Brufacee</b> (r/advertising): roughly 1 winner per 10–12 collaborations and you cannot tell which in advance, so every rejection is made on almost no signal. Argues the lever is bet sizing, not better selection. <i>The sharpest challenge received.</i></li>
+        <li><b>SEOman1</b>: passing on the right creator is probably worse, because you never see what you could have made.</li>
+        <li><b>AnabolicAcolyte</b> (r/InstagramMarketing): asking for analytics is normal, but screenshots are easy to fake, so they are weak evidence.</li>
+      </ul>
+    </section>
+
+    <section class="aic">
+      <h3>From the AI assistant</h3>
+      <ul>
+        <li><b>Beta distributions</b> for the five proportion signals. The course taught Poisson and binomial, not Beta.</li>
+        <li><b>Factorising</b> into three binary latents, so MECE holds by construction.</li>
+        <li><b>The cost matrix</b> in relative units, and the argument that only ratios matter.</li>
+        <li><b>Adversarial simulation.</b> Modelling inauthenticity as something that actively evades detection.</li>
+        <li><b>The oracle arm.</b> Running with deliberately wrong parameters to show how much the results depend on guessing right.</li>
+        <li><b>Expected calibration error</b> and the pooled replications.</li>
+        <li style="color:var(--bad)"><b>And five mistakes it made.</b> Claimed 8 states would need 48 likelihoods when the real number is 12. Claimed low engagement was evidence of mismatch, when mismatch is invisible on engagement rate. Built a simulator producing only crude fakes, so the agent was never wrong. Recommended eight subreddits without checking their rules, two of which would have removed the post on sight. And said value of information was not covered in Week 1, when the Saturday document states the rule explicitly, wrongly crediting Reddit for something the course had already taught.</li>
+      </ul>
+    </section>
+  </div>
+</section>
+
+<!-- ============================ LIMITATIONS ============================ -->
+<section class="tab" id="t-lim">
+  <h2>What this agent does not do</h2>
+  <p class="lede">
+    Everything below is a known problem, not a discovered one. Each is either fixed in
+    the v1 rebuild or stated as a boundary on what the result claims.
+  </p>
+
+  <div class="row r-2">
+    <div class="card">
+      <h3>It never learns</h3>
+      <p style="color:var(--ink2)">The Bayes update works on any influencer you hand it,
+      so it handles new inputs fine. But outcomes are recorded and then ignored. Every
+      case is judged as if it were the first one ever seen. Sign a fraud today and the
+      agent is exactly as confident about an identical profile tomorrow.</p>
+    </div>
+
+    <div class="card">
+      <h3>It almost never escalates</h3>
+      <p style="color:var(--ink2)">Escalation is a real action, and the cost-blind policy
+      uses it about 7% of the time. The cost-aware policy uses it on roughly <b>0.3%</b>
+      of cases, because the gate only fires when the belief is spread thin, and this agent
+      is rarely uncertain. It is confidently right or confidently wrong.</p>
+    </div>
+
+    <div class="card">
+      <h3>It picks probes by price, not usefulness</h3>
+      <p style="color:var(--ink2)">Try the <b>Disclosure problem</b> preset. The agent
+      correctly spots a safety risk, then asks for <b>audience analytics</b>, which cannot
+      tell it anything about disclosure history. It chose that because analytics costs 1
+      unit and declining costs 1.54. Probes have flat costs in v0, so the cheap one always
+      wins.</p>
+    </div>
+
+    <div class="card">
+      <h3>It double-counts correlated evidence</h3>
+      <p style="color:var(--ink2)">Three signals feed the authenticity question and are
+      scored as independent, so their evidence multiplies. In reality one operator degrades
+      all three together, so the second signal is partly repeating the first. This is why
+      the posteriors run so hot, 0.99 and 0.001 with almost nothing in between.</p>
+    </div>
+
+    <div class="card">
+      <h3>All the data is simulated</h3>
+      <p style="color:var(--ink2)">No real influencer profiles are used. Recall of 0.92–0.96
+      is high partly because the simulator and the agent share a model family. Real data
+      would be messier, and the invisible cost of wrongly declining someone would likely
+      matter more than it does here.</p>
+    </div>
+
+    <div class="card">
+      <h3>Selection may be the wrong lever</h3>
+      <p style="color:var(--ink2)">A practitioner argued roughly 1 in 10–12 collaborations
+      works and nobody can predict which, so the real fix is smaller bets rather than better
+      screening. The defence is narrow and worth stating: at mid-luxury price points you
+      cannot run twelve cheap tests with the house's name attached.</p>
+    </div>
+  </div>
+
+  <div class="note acc" style="margin-top:20px">
+    <b>On the numbers.</b> The figures on this page come from the single 40-case test set.
+    The paper reports precision and recall pooled over 1,600 cases, where they read 0.894
+    and 0.924 rather than the higher values you may see here. Same code, different sample
+    size, not a disagreement.
+  </div>
+</section>
+
+<footer>
+  Simulated data only. The agent's output is a brand-side partnership decision, never a
+  judgement about a person, which is also why the hidden state is called "low audience
+  authenticity" rather than "fraud". Source: <code>serve.py</code> and <code>src/</code>.
+</footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let ARM="misspecified", LAST=null;
+
+/* tabs */
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); $("t-"+b.dataset.t).classList.add("on");
+  window.scrollTo({top:0,behavior:"smooth"});
+}));
+
+/* ---------- batch experiment ---------- */
+const S={
+  n_cases:{el:"v_n",f:v=>v}, seed:{el:"v_seed",f:v=>v},
+  p_A_false:{el:"v_pa",f:v=>v+"%",s:.01}, p_M_false:{el:"v_pm",f:v=>v+"%",s:.01},
+  p_S_false:{el:"v_ps",f:v=>v+"%",s:.01},
+  p_sophisticated:{el:"v_soph",f:v=>v+"%",s:.01}, soph_pull:{el:"v_pull",f:v=>v+"%",s:.01},
+  sign_unsafe:{el:"v_cu",f:v=>v}, decline_good:{el:"v_cd",f:v=>v}, sign_fake:{el:"v_cf",f:v=>v},
+  tau:{el:"v_tau",f:v=>(v/100).toFixed(2),s:.01},
+  baseline_cutoff:{el:"v_co",f:v=>(v/10).toFixed(1)+"%",s:.001},
+};
+function cfg(){const o={arm:ARM};for(const k in S){const r=+$(k).value;o[k]=S[k].s?r*S[k].s:r;}return o;}
+/* live cost matrix on the How tab */
+function renderCosts(){
+  const cu=+$("sign_unsafe").value, cd=+$("decline_good").value, cf=+$("sign_fake").value;
+  const cm=15, gift=2, an=1, esc=5, clean=-10;
+  const cell=(v,hot)=>`<td class="${v<0?'good':(hot&&v>=100?'bad':'')}">${v<0?v:'+'+v}</td>`;
+  $("costmatrix").innerHTML=`<table>
+    <thead><tr><th>If the truth is…</th><th>Sign</th><th>Gift first</th>
+      <th>Request analytics</th><th>Escalate</th><th>Decline</th></tr></thead>
+    <tbody>
+      <tr><td>Clean · worth signing</td>${cell(clean)}${cell(gift)}${cell(an)}${cell(esc)}
+        <td class="warn">+${cd}</td></tr>
+      <tr><td>Padded audience</td>${cell(cf,1)}${cell(gift)}${cell(an)}${cell(esc)}<td class="dim">0</td></tr>
+      <tr><td>Real but wrong fit</td>${cell(cm,1)}${cell(gift)}${cell(an)}${cell(esc)}<td class="dim">0</td></tr>
+      <tr><td><b>Buried safety risk</b></td>${cell(cu,1)}${cell(gift)}${cell(an)}${cell(esc)}<td class="dim">0</td></tr>
+    </tbody></table>
+    <div class="kv"><span>ratio, safety failure to wasted fee <b>${(cu/cf).toFixed(1)}×</b></span>
+    <span>ratio, safety failure to declining someone good <b>${(cu/Math.max(cd,1)).toFixed(1)}×</b></span>
+    <span class="warn">both guesses</span></div>`;
+}
+
+let t1=null; const sched=()=>{clearTimeout(t1);t1=setTimeout(go,180);};
+for(const k in S){const e=$(k);e.addEventListener("input",()=>{
+  $(S[k].el).textContent=S[k].f(+e.value);renderCosts();sched();});}
+document.querySelectorAll("#arm button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#arm button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");ARM=b.dataset.v;go();score();}));
+
+async function go(){
+  const r=await fetch("/api/run",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(cfg())});
+  LAST=await r.json();
+  if(LAST.error){$("trace").textContent="error: "+LAST.error;return;}
+  render();
+}
+
+const NM={threshold:"Threshold · cost-blind",expected_cost:"Expected cost · cost-aware",
+          baseline:"Engagement baseline"};
+
+function render(){
+  const t=LAST.truth_counts||{}, ec=LAST.summary.find(s=>s.policy==="expected_cost"),
+        bl=LAST.summary.find(s=>s.policy==="baseline");
+  $("hero").innerHTML=`
+    <div class="stat"><div class="n good">${ec.total_cost.toFixed(0)}</div>
+      <div class="l">cost-aware agent<br>total cost</div></div>
+    <div class="stat"><div class="n bad">+${bl.total_cost.toFixed(0)}</div>
+      <div class="l">naive baseline<br>total cost</div></div>
+    <div class="stat"><div class="n">${ec.fp_sophisticated}</div>
+      <div class="l">sophisticated fakes<br>the agent signed</div></div>
+    <div class="stat"><div class="n ${ec.fp_safety_risk?'bad':'good'}">${ec.fp_safety_risk}</div>
+      <div class="l">safety risks<br>the agent signed</div></div>
+    <div class="stat"><div class="n">${(ec.human_review_rate*100).toFixed(1)}%</div>
+      <div class="l">sent to a human</div></div>
+    <div class="stat"><div class="n dim">${t.sophisticated??"–"}/${t.inauthentic??"–"}</div>
+      <div class="l">fakes that were<br>actively evading</div></div>`;
+
+  let h=`<thead><tr><th>Policy</th><th>Cost</th><th>Precision</th><th>Recall</th>
+    <th>Signed</th><th>Safety risks</th><th>Soph. fakes</th><th>Good declined</th>
+    <th>Escalated</th></tr></thead><tbody>`;
+  for(const s of LAST.summary)
+    h+=`<tr><td>${NM[s.policy]}</td>
+      <td class="${s.total_cost<0?'good':'bad'}"><b>${s.total_cost.toFixed(0)}</b></td>
+      <td>${s.precision.toFixed(3)}</td><td>${s.recall.toFixed(3)}</td>
+      <td>${s.true_positive+s.false_positive}</td>
+      <td class="${s.fp_safety_risk?'bad':'dim'}">${s.fp_safety_risk}</td>
+      <td class="${s.fp_sophisticated?'warn':'dim'}">${s.fp_sophisticated}</td>
+      <td>${s.false_negative}</td><td>${(s.human_review_rate*100).toFixed(1)}%</td></tr>`;
+  $("summary").innerHTML=h+"</tbody>";
+
+  let c=`<thead><tr><th>Case</th><th>Engagement</th><th>Generic</th><th>Spikes</th>
+    <th>P(real)</th><th>P(clean)</th><th>Decision</th><th>Truth</th><th>Cost</th>
+    </tr></thead><tbody>`;
+  for(const r of LAST.cases){
+    const a=r.actions.expected_cost, wrong=(a==="SIGN"&&!r.truth.clean);
+    const lab=r.truth.clean?`<span class="good">worth signing</span>`
+      :!r.truth.safe?`<span class="bad">safety risk</span>`
+      :!r.truth.authentic?`<span class="${r.truth.sophisticated?'bad':'warn'}">${r.truth.sophisticated?"sophisticated fake":"crude fake"}</span>`
+      :`<span class="dim">mismatched</span>`;
+    c+=`<tr class="click" data-id="${r.case_id}">
+      <td>${r.case_id}${wrong?' <b class="bad">←</b>':''}</td>
+      <td>${(r.e1*100).toFixed(2)}%</td><td>${(r.e2*100).toFixed(0)}%</td><td>${r.e3}</td>
+      <td>${r.p_authentic.toFixed(3)}</td><td>${r.p_clean.toFixed(3)}</td>
+      <td><span class="pill ${a}">${a}</span></td><td>${lab}</td>
+      <td class="${r.costs.expected_cost<0?'good':r.costs.expected_cost>15?'bad':''}">${r.costs.expected_cost}</td></tr>`;
+  }
+  $("cases").innerHTML=c+"</tbody>";
+  document.querySelectorAll("#cases tr.click").forEach(tr=>
+    tr.addEventListener("click",()=>detail(tr.dataset.id)));
+
+  let k=`<thead><tr><th>Bin on P(clean)</th><th>n</th><th>Agent said</th>
+    <th>Actually was</th><th>Gap</th></tr></thead><tbody>`;
+  for(const b of (LAST.calibration.bins||[]))
+    k+=`<tr><td>${b.bin}</td><td>${b.n}</td><td>${(b.mean_predicted*100).toFixed(1)}%</td>
+      <td>${(b.observed_clean*100).toFixed(1)}%</td>
+      <td class="${Math.abs(b.gap)>0.05?'bad':'dim'}">${b.gap>0?"+":""}${(b.gap*100).toFixed(1)} pts</td></tr>`;
+  $("calib").innerHTML=k+"</tbody>";
+  $("ece").innerHTML=`<span>Expected calibration error <b>${LAST.calibration.ece}</b></span>
+    <span>Positive gap means overconfident. Watch the top bin, that is where every signing happens.</span>`;
+
+  $("trace").innerHTML=`<h3>What just ran</h3>`+LAST.trace.map(s=>`
+    <div class="t"><span class="ms">${s.ms} ms</span>
+    <span class="f">${s.file}</span> → <span class="fn">${s.func}</span>
+    <div class="d">${s.detail}</div>
+    ${s.result?`<div class="res">↳ ${Object.entries(s.result).map(([a,b])=>
+      `${a}: <b>${Array.isArray(b)?b.length+" columns":b}</b>`).join(" · ")}</div>`:""}
+    </div>`).join("");
+}
+
+function detail(id){
+  const r=LAST.cases.find(x=>x.case_id===id);
+  $("detailwrap").style.display="block";
+  const bar=(p,c)=>`<div class="bar"><i style="width:${(p*100).toFixed(1)}%;background:${c}"></i></div>`;
+  const ec=Object.entries(r.expected_costs).sort((a,b)=>a[1]-b[1]);
+  $("detail").innerHTML=`
+  <div class="row" style="grid-template-columns:repeat(auto-fit,minmax(215px,1fr))">
+   <div><h3>What it saw</h3><table>
+    <tr><td>engagement rate</td><td>${(r.e1*100).toFixed(2)}%</td></tr>
+    <tr><td>generic comments</td><td>${(r.e2*100).toFixed(0)}%</td></tr>
+    <tr><td>growth spikes</td><td>${r.e3}</td></tr>
+    <tr><td>in target market</td><td>${(r.e4*100).toFixed(0)}%</td></tr>
+    <tr><td>premium collabs</td><td>${(r.e5*100).toFixed(0)}%</td></tr>
+    <tr><td>ads disclosed</td><td>${(r.e6*100).toFixed(0)}%</td></tr></table></div>
+   <div><h3>What it believed</h3>
+    <div class="muted">audience real ${(r.p_authentic*100).toFixed(1)}%</div>${bar(r.p_authentic,"var(--good)")}
+    <div class="muted" style="margin-top:9px">matches brand ${(r.p_matched*100).toFixed(1)}%</div>${bar(r.p_matched,"var(--acc)")}
+    <div class="muted" style="margin-top:9px">no buried risk ${(r.p_safe*100).toFixed(1)}%</div>${bar(r.p_safe,"var(--warn)")}
+    <div class="muted" style="margin-top:14px">all three fine <b style="color:var(--ink)">${(r.p_clean*100).toFixed(1)}%</b></div>${bar(r.p_clean,"#fff")}</div>
+   <div><h3>Expected cost</h3><table>${ec.map(([a,v],i)=>
+     `<tr><td>${a}${i===0?' <span class="good">← chosen</span>':''}</td><td>${v.toFixed(2)}</td></tr>`).join("")}</table></div>
+   <div><h3>Sealed truth</h3><table>
+    <tr><td>audience real</td><td class="${r.truth.authentic?'good':'bad'}">${r.truth.authentic?"yes":"no"}</td></tr>
+    <tr><td>matched</td><td class="${r.truth.matched?'good':'bad'}">${r.truth.matched?"yes":"no"}</td></tr>
+    <tr><td>safe</td><td class="${r.truth.safe?'good':'bad'}">${r.truth.safe?"yes":"no"}</td></tr>
+    <tr><td>actively evading</td><td class="${r.truth.sophisticated?'bad':'dim'}">${r.truth.sophisticated?"yes":"no"}</td></tr></table></div>
+  </div>
+  ${r.actions.expected_cost==="SIGN"&&!r.truth.clean?`<div class="note" style="margin-top:16px">
+    The agent signed this while believing the audience was <b>${(r.p_authentic*100).toFixed(0)}%</b>
+    likely to be real. It was not. Notice it was not uncertain. It was confident and
+    wrong, which is why an uncertainty threshold cannot catch this failure.</div>`:""}`;
+  $("detailwrap").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ---------- manual scorer ---------- */
+const SG={e1:{el:"v_e1",f:v=>(v/10).toFixed(2)+"%",s:.001},e2:{el:"v_e2",f:v=>v+"%",s:.01},
+  e3:{el:"v_e3",f:v=>v,s:1},e4:{el:"v_e4",f:v=>v+"%",s:.01},
+  e5:{el:"v_e5",f:v=>v+"%",s:.01},e6:{el:"v_e6",f:v=>v+"%",s:.01}};
+const PRE={clean:{e1:28,e2:30,e3:0,e4:72,e5:62,e6:88},
+  crude:{e1:10,e2:78,e3:3,e4:48,e5:30,e6:70},
+  soph:{e1:25,e2:38,e3:1,e4:68,e5:58,e6:84},
+  pods:{e1:70,e2:74,e3:2,e4:60,e5:45,e6:75},
+  mismatch:{e1:31,e2:28,e3:0,e4:30,e5:14,e6:86},
+  risk:{e1:29,e2:31,e3:0,e4:71,e5:60,e6:35}};
+
+let t2=null; const ssched=()=>{clearTimeout(t2);t2=setTimeout(score,150);};
+for(const k in SG){const e=$(k);e.addEventListener("input",()=>{$(SG[k].el).textContent=SG[k].f(+e.value);ssched();});}
+document.querySelectorAll(".preset").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".preset").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  const p=PRE[b.dataset.p];
+  for(const k in p){$(k).value=p[k];$(SG[k].el).textContent=SG[k].f(p[k]);}
+  score();}));
+
+async function score(){
+  const body={arm:ARM,tau:+$("tau").value*.01,sign_unsafe:+$("sign_unsafe").value,
+    decline_good:+$("decline_good").value,sign_fake:+$("sign_fake").value,
+    baseline_cutoff:+$("baseline_cutoff").value*.001};
+  for(const k in SG) body[k]=+$(k).value*SG[k].s;
+  const r=await fetch("/api/score",{method:"POST",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.error){$("scoreout").textContent="error: "+d.error;return;}
+
+  const bar=(p,c)=>`<div class="bar"><i style="width:${(p*100).toFixed(1)}%;background:${c}"></i></div>`;
+  const ec=Object.entries(d.expected_costs).sort((a,b)=>a[1]-b[1]);
+  const a=d.actions.expected_cost;
+  const say={SIGN:"Sign the contract.",DECLINE:"Decline. Not worth the exposure.",
+    ESCALATE:"Send it to a human. Too spread out to act on.",
+    ANALYTICS:"Ask for audience analytics first.",
+    GIFT:"Send product first and watch what happens."}[a];
+
+  $("scoreout").innerHTML=`
+   <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+     <span class="pill ${a}" style="font-size:17px;padding:6px 18px">${a}</span>
+     <span style="color:var(--ink2)">${say}</span>
+   </div>
+   <div class="row" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
+    <div><h3>What it believes</h3>
+      <div class="muted">audience is real <b style="color:var(--ink)">${(d.beliefs.p_authentic*100).toFixed(1)}%</b></div>
+      ${bar(d.beliefs.p_authentic,"var(--good)")}
+      <div class="muted" style="margin-top:10px">matches the brand <b style="color:var(--ink)">${(d.beliefs.p_matched*100).toFixed(1)}%</b></div>
+      ${bar(d.beliefs.p_matched,"var(--acc)")}
+      <div class="muted" style="margin-top:10px">no buried risk <b style="color:var(--ink)">${(d.beliefs.p_safe*100).toFixed(1)}%</b></div>
+      ${bar(d.beliefs.p_safe,"var(--warn)")}
+      <div class="muted" style="margin-top:16px">all three fine <b style="color:var(--ink)">${(d.beliefs.p_clean*100).toFixed(1)}%</b></div>
+      ${bar(d.beliefs.p_clean,"#fff")}</div>
+    <div><h3>Expected cost of each action</h3>
+      <table>${ec.map(([n,v],i)=>`<tr><td>${n}${i===0?' <span class="good">← cheapest</span>':''}</td>
+        <td class="${v<0?'good':''}">${v.toFixed(2)}</td></tr>`).join("")}</table>
+      <div class="kv"><span>strongest atom <b>${(d.beliefs.max_atom*100).toFixed(1)}%</b></span>
+      <span>${d.gate_fired?'<b class="warn">gate fired</b>':'gate did not fire'}</span></div></div>
+   </div>
+   ${a==="SIGN"&&d.beliefs.p_authentic>0.85&&+$("e2").value>34?`<div class="note" style="margin-top:18px">
+     Comment quality is mediocre here and the agent signed anyway, at
+     ${(d.beliefs.p_authentic*100).toFixed(0)}% confidence the audience is real. That is
+     the shape of the failure: mild evidence against, overwhelmed by two other signals
+     agreeing.</div>`:""}`;
+
+  $("scoretrace").innerHTML=`<h3>What just ran</h3>`+d.trace.map(s=>`
+    <div class="t"><span class="ms">${s.ms} ms</span>
+    <span class="f">${s.file}</span> → <span class="fn">${s.func}</span>
+    <div class="d">${s.detail}</div></div>`).join("");
+}
+
+renderCosts(); go(); score();
+</script>
+</body>
+</html>
