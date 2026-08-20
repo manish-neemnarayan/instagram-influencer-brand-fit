@@ -125,11 +125,32 @@ rejection rate, and inflates it in the direction of an error nobody ever observe
 A2 and A3 resolve nothing by themselves, they buy evidence at a cost, and they buy
 evidence about **different latents**:
 
-- **A3 (analytics)** → resolves **A**. Geography, growth curve, real reach.
+- **A3 (analytics)** → returns platform-native audience composition. In this model that
+  principally refines **E4**, which answers **M**, plus growth-curve data which refines
+  **E3**, which answers **A**.
 - **A2 (gift first)** → resolves **M**. A real but mismatched audience engages with the
   post and still does not buy.
 
 Neither resolves **S**, which is why S-risk drives escalation rather than probing.
+
+### Correction, found while writing the probability decision record
+
+An earlier version of this section claimed A3 *"resolves A: geography, growth curve, real
+reach."* That is wrong on its own terms. **Geography is E4, and E4 answers M, not A.** The
+document contradicted its own signal table.
+
+The deeper issue is that the sentence was true about the world and false about the model.
+In reality audience geography *does* carry authenticity information: bot farms cluster in
+particular countries, and an audience whose locations do not match the creator's language
+or content is a recognised authenticity flag. In this model it carries none, because the
+one-signal-one-question rule forbids E4 from touching A.
+
+That rule is what reduces the model to 12 likelihoods instead of 24. Letting E4 inform
+both A and M would be more faithful and would cost more numbers to defend. **The
+simplification bought something real and cost something real**, and the cost is that the
+agent cannot use geography to detect a padded audience even though a human analyst would.
+
+Recorded as a limitation. Not changed in v0, which is frozen.
 
 ---
 
@@ -280,5 +301,7 @@ Feedback is recorded but unused. Stated as a limitation and the natural next ver
 | 5 | How to design the sensitivity analysis | r/AskStatistics | Follow-up asked |
 | 6 | What fraction of shortlisted influencers are inauthentic? | r/influencermarketing | Post filtered, needs rehoming |
 | 7 | Should P(E1 \| A ✗) be bimodal? | Own modelling | Bought followers lower the rate; bought engagement raises it |
+| 8 | Should audience geography inform authenticity as well as match? | Own doc contradicting own signal table | Real bot farms cluster geographically. Allowing it breaks one-signal-one-question and doubles the likelihoods for E4 |
+| 9 | Sweep `sign_fake` in the sensitivity analysis | Rich-Owl1937, r/advertising | Never swept, and it prices the error the agent actually makes 73 times out of 75 |
 
 Each open item is a number waiting on a human answer. That is the point of M1.
